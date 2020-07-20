@@ -9,6 +9,12 @@ class MessagesFormats<T> implements Serializable{
         this._data = data;
     }
 
+    void setData(T data){
+        this._data = data;
+    }
+    void setTitle(String command){
+        this._command = command;
+    }
 	String getTitle() {
 		return _command;
     }
