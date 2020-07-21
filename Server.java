@@ -6,6 +6,7 @@ import java.security.SecureRandom;
 import java.net.*;
 import java.util.Date;
 import java.util.Calendar;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 // Server class 
@@ -111,24 +112,26 @@ class ClientHandler extends Thread {
 							System.out.println("TempID:");
 							System.out.println(downloadResponse.getData());
 							break;
-						
+
 						case "Upload":
-							for(String line : inputData.getData()){
+							for (String line : inputData.getData()) {
 								Service.printOutLog(line);
 							}
-							break;	
+							System.out.println("Contact log checking");
+							contact(inputData.getData());
+							break;
 						default:
 							break;
 					}
 				}
-
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
+			} catch (ParseException e) {
+				e.printStackTrace();
 			}
 		}
-
 		try {
 			// closing resources
 			this.dis.close();
@@ -139,10 +142,32 @@ class ClientHandler extends Thread {
 		}
 	}
 
+	void contact(String[] data) throws IOException, ParseException {
+		String filename = "tempIDs.txt";
+		BufferedReader reader = new BufferedReader(new FileReader(filename));
+		String line;
+		HashMap<String, ContactObject> map = new HashMap<String, ContactObject>();
+		while ((line = reader.readLine()) != null) {
+			String[] stringData = line.split(" ");
+			map.put(stringData[1],
+					new ContactObject(stringData[0], Service.stringToDate(stringData[2] + " " + stringData[3]),
+							Service.stringToDate(stringData[4] + " " + stringData[5])));
+		}
+		for (String d : data) {
+			String id = d.split(" ")[0];
+			if (map.containsKey(id)) {
+				System.out.println(map.get(id).get_phone() + ",");
+				System.out.println(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(map.get(id).get_start()) + ",");
+				System.out.println(id + ";");
+			}
+		}
+		reader.close();
+	}
+
 	String generateNewTempID(String phone) {
 		String retrunString = "";
 		try {
-			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 			byte[] byte20 = new byte[20];
 			new SecureRandom().nextBytes(byte20);
 			String data = "";
@@ -150,7 +175,7 @@ class ClientHandler extends Thread {
 			for (byte b : byte20) {
 				sb.append(String.format("%02X", b));
 			}
-			
+
 			BigInteger id = new BigInteger(sb.toString(), 16);
 			retrunString = id.toString();
 			Calendar cal = Calendar.getInstance();
@@ -159,7 +184,7 @@ class ClientHandler extends Thread {
 			Date end = cal.getTime();
 
 			data = phone + " " + id.toString() + " " + formatter.format(start) + " " + formatter.format(end);
-			Service.appendToFile("tempIDs.txt", data,1);
+			Service.appendToFile("tempIDs.txt", data, 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

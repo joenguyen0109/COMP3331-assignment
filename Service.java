@@ -44,7 +44,7 @@ class Service {
     }
 
     static Date stringToDate(String stringdate) throws ParseException {
-        return new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").parse(stringdate);
+        return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(stringdate);
     }
 
     static void printOutLog(String line) {

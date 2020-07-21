@@ -1,18 +1,18 @@
 import java.util.Date;
 
-class UploadObject {
-    private final String _id;
+class ContactObject {
+    private final String _phone;
     private final Date _start;
     private final Date _end;
 
-    UploadObject(String id, Date start, Date end) {
-        this._id = id;
+    ContactObject(String id, Date start, Date end) {
+        this._phone = id;
         this._start = start;
         this._end = end;
     }
 
-    public String get_id() {
-        return _id;
+    public String get_phone() {
+        return _phone;
     }
 
     public Date get_start() {
