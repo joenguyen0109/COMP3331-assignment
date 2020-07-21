@@ -1,4 +1,7 @@
 import java.io.*;
+import java.util.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 class Service {
     static void appendToFile(String filePath, String text, int noOfLines) {
@@ -12,7 +15,6 @@ class Service {
             br.newLine();
             // you can use write or append method
             br.write(text);
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -24,5 +26,31 @@ class Service {
             }
         }
 
+    }
+
+    static int countFileLine(String name) {
+        int linecount = 0;
+        try {
+            String filename = name;
+            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            while (reader.readLine() != null) {
+                linecount++;
+            }
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return linecount;
+    }
+
+    static Date stringToDate(String stringdate) throws ParseException {
+        return new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").parse(stringdate);
+    }
+
+    static void printOutLog(String line) {
+        String[] dataString = line.split(" ");
+        System.out.println(dataString[0] + ",");
+        System.out.println(dataString[1] + " " + dataString[2] + ",");
+        System.out.println(dataString[3] + " " + dataString[4] + ";");
     }
 }

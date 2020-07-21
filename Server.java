@@ -1,5 +1,6 @@
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.security.SecureRandom;
 import java.net.*;
@@ -88,10 +89,8 @@ class ClientHandler extends Thread {
 				received = inputData.getTitle();
 				System.out.println(received);
 				if (received.equals("Exit")) {
-					System.out.println("Client " + this.s + " sends exit...");
-					System.out.println("Closing this connection.");
+					System.out.println(inputData.getData()[0] + " logout");
 					this.s.close();
-					System.out.println("Connection closed");
 					break;
 				} else {
 					switch (received) {
@@ -104,7 +103,6 @@ class ClientHandler extends Thread {
 							System.out.println("Sent response");
 							// Check file
 							break;
-
 						case "Download":
 							MessagesFormats<String> downloadResponse = new MessagesFormats<String>("Download",
 									generateNewTempID(inputData.getData()[0]));
@@ -113,6 +111,12 @@ class ClientHandler extends Thread {
 							System.out.println("TempID:");
 							System.out.println(downloadResponse.getData());
 							break;
+						
+						case "Upload":
+							for(String line : inputData.getData()){
+								Service.printOutLog(line);
+							}
+							break;	
 						default:
 							break;
 					}
@@ -146,12 +150,15 @@ class ClientHandler extends Thread {
 			for (byte b : byte20) {
 				sb.append(String.format("%02X", b));
 			}
-			retrunString = sb.toString();
+			
+			BigInteger id = new BigInteger(sb.toString(), 16);
+			retrunString = id.toString();
 			Calendar cal = Calendar.getInstance();
 			Date start = cal.getTime();
 			cal.add(Calendar.MINUTE, 15);
 			Date end = cal.getTime();
-			data = phone + " " + sb.toString() + " " + formatter.format(start) + " " + formatter.format(end);
+
+			data = phone + " " + id.toString() + " " + formatter.format(start) + " " + formatter.format(end);
 			Service.appendToFile("tempIDs.txt", data,1);
 		} catch (Exception e) {
 			e.printStackTrace();
