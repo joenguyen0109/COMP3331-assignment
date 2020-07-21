@@ -22,7 +22,7 @@ public class Client {
 			String[] authData = new String[2];
 			authData[0] = scn.nextLine();
 			System.out.print("Password: ");
-			authData[1] = scn.nextLine(); 
+			authData[1] = scn.nextLine();
 			MessagesFormats<String[]> outputMessage = new MessagesFormats<String[]>("auth", authData);
 			objectOutput.writeObject(outputMessage);
 
@@ -41,7 +41,7 @@ public class Client {
 					System.out.println("Invalid Password. Please try again");
 					System.out.print("Password: ");
 					authData[1] = scn.nextLine();
-					String[] data = new String[]{authData[0],authData[1]};
+					String[] data = new String[] { authData[0], authData[1] };
 					outputMessage = new MessagesFormats<String[]>("auth", data);
 					objectOutput.writeObject(outputMessage);
 				} else if (inputData.getData().equals("Wrong Phone")) {
@@ -50,10 +50,10 @@ public class Client {
 					authData[0] = scn.nextLine();
 					System.out.print("Password: ");
 					authData[1] = scn.nextLine();
-					String[] data = new String[]{authData[0],authData[1]};
+					String[] data = new String[] { authData[0], authData[1] };
 					outputMessage = new MessagesFormats<String[]>("auth", data);
 					objectOutput.writeObject(outputMessage);
-				}else if (inputData.getData().equals("Wrong Password And Exit")) {
+				} else if (inputData.getData().equals("Wrong Password And Exit")) {
 					System.out.println("Invalid Password. Your account has been blocked. Please try again later");
 					break;
 				}
@@ -62,7 +62,7 @@ public class Client {
 			while (true) {
 				if (auth) {
 					command = scn.nextLine(); // next command
-				}else{
+				} else {
 					command = "logout";
 				}
 
@@ -76,7 +76,14 @@ public class Client {
 				} else {
 					switch (command) {
 						case "Download_tempID":
-							// do something here
+							MessagesFormats<String[]> downloadMessage = new MessagesFormats<String[]>("Download",
+									new String[] { authData[0] });
+							objectOutput.writeObject(downloadMessage);
+							@SuppressWarnings("unchecked")
+							MessagesFormats<String> downloadResponse = (MessagesFormats<String>) objectInput
+									.readObject();
+							System.out.println("TempID:");
+							System.out.println(downloadResponse.getData());
 							break;
 						case "Upload_contact_log":
 							// do something here

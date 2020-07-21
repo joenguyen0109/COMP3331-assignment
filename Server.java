@@ -1,10 +1,11 @@
 
 import java.io.*;
-import java.text.*;
 import java.util.HashMap;
-
+import java.security.SecureRandom;
 import java.net.*;
 import java.util.Date;
+import java.util.Calendar;
+import java.text.SimpleDateFormat;
 
 // Server class 
 public class Server {
@@ -46,7 +47,6 @@ public class Server {
 	}
 
 	static void readAuthFile() {
-
 		try {
 			String filename = "credentials.txt";
 			BufferedReader reader = new BufferedReader(new FileReader(filename));
@@ -65,8 +65,6 @@ public class Server {
 
 // ClientHandler class
 class ClientHandler extends Thread {
-	DateFormat fordate = new SimpleDateFormat("yyyy/MM/dd");
-	DateFormat fortime = new SimpleDateFormat("hh:mm:ss");
 	final ObjectInputStream dis;
 	final ObjectOutputStream dos;
 	final Socket s;
@@ -97,7 +95,7 @@ class ClientHandler extends Thread {
 					break;
 				} else {
 					switch (received) {
-						case "auth" :
+						case "auth":
 							System.out.println(inputData.getData()[0] + " " + inputData.getData()[1]);
 							System.out.println(Server.authData.containsKey(inputData.getData()[0]));
 							MessagesFormats<String> authResponse = new MessagesFormats<String>("auth",
@@ -105,6 +103,15 @@ class ClientHandler extends Thread {
 							dos.writeObject(authResponse);
 							System.out.println("Sent response");
 							// Check file
+							break;
+
+						case "Download":
+							MessagesFormats<String> downloadResponse = new MessagesFormats<String>("Download",
+									generateNewTempID(inputData.getData()[0]));
+							dos.writeObject(downloadResponse);
+							System.out.println("user: " + inputData.getData()[0]);
+							System.out.println("TempID:");
+							System.out.println(downloadResponse.getData());
 							break;
 						default:
 							break;
@@ -126,6 +133,30 @@ class ClientHandler extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	String generateNewTempID(String phone) {
+		String retrunString = "";
+		try {
+			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+			byte[] byte20 = new byte[20];
+			new SecureRandom().nextBytes(byte20);
+			String data = "";
+			StringBuilder sb = new StringBuilder();
+			for (byte b : byte20) {
+				sb.append(String.format("%02X", b));
+			}
+			retrunString = sb.toString();
+			Calendar cal = Calendar.getInstance();
+			Date start = cal.getTime();
+			cal.add(Calendar.MINUTE, 15);
+			Date end = cal.getTime();
+			data = phone + " " + sb.toString() + " " + formatter.format(start) + " " + formatter.format(end);
+			Service.appendToFile("tempIDs.txt", data,1);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return retrunString;
 	}
 
 	String checkAuth(String phone, String password) {
