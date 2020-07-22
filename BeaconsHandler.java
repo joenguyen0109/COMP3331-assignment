@@ -6,7 +6,7 @@ import java.util.Calendar;
 import java.util.Date;
 class BeaconsHandler extends Thread {
     private int _port;
-
+    static String state = "Writing";
     BeaconsHandler(int port) {
         _port = port;
     }
@@ -19,6 +19,7 @@ class BeaconsHandler extends Thread {
                 DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length);
                 beaconHanldersSocket.receive(packet);
                 String message = new String(packet.getData(), packet.getOffset(), packet.getLength(), "UTF-8");
+                state = "Writing";
                 if (message.equals("Exit")) {
                     break;
                 } else {
@@ -29,7 +30,7 @@ class BeaconsHandler extends Thread {
                     System.out.println("Current time is:");
                     Date currentTime = Calendar.getInstance().getTime();
                     System.out.println(Service.dateToString(currentTime) + ".");
-                    
+
                 }
             }
             beaconHanldersSocket.close();
@@ -38,5 +39,12 @@ class BeaconsHandler extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+}
+
+class checkExpire extends Thread{
+    @Override
+    public void run(){
+
     }
 }
