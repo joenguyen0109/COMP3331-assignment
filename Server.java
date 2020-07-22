@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.security.SecureRandom;
 import java.net.*;
 import java.util.Date;
-import java.util.Calendar;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 // Server class 
 public class Server {
@@ -42,7 +40,6 @@ public class Server {
 
 				// Invoking the start() method
 				t.start();
-
 			} catch (Exception e) {
 				s.close();
 				e.printStackTrace();
@@ -108,7 +105,8 @@ class ClientHandler extends Thread {
 							break;
 						case "Download":
 							MessagesFormats<String> downloadResponse = new MessagesFormats<String>("Download",
-									generateNewTempID(inputData.getData()[0]));
+									generateNewTempID(inputData.getData()));
+							
 							dos.writeObject(downloadResponse);
 							System.out.println("user: " + inputData.getData()[0]);
 							System.out.println("TempID:");
@@ -122,6 +120,7 @@ class ClientHandler extends Thread {
 							System.out.println("Contact log checking");
 							contact(inputData.getData());
 							break;
+							
 						default:
 							break;
 					}
@@ -159,17 +158,16 @@ class ClientHandler extends Thread {
 			String id = d.split(" ")[0];
 			if (map.containsKey(id)) {
 				System.out.println(map.get(id).get_phone() + ",");
-				System.out.println(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(map.get(id).get_start()) + ",");
+				System.out.println(Service.dateToString(map.get(id).get_start()) + ",");
 				System.out.println(id + ";");
 			}
 		}
 		reader.close();
 	}
 
-	String generateNewTempID(String phone) {
+	String generateNewTempID(String[] inputData) {
 		String retrunString = "";
 		try {
-			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 			byte[] byte20 = new byte[20];
 			new SecureRandom().nextBytes(byte20);
 			String data = "";
@@ -180,12 +178,8 @@ class ClientHandler extends Thread {
 
 			BigInteger id = new BigInteger(sb.toString(), 16);
 			retrunString = id.toString();
-			Calendar cal = Calendar.getInstance();
-			Date start = cal.getTime();
-			cal.add(Calendar.MINUTE, 15);
-			Date end = cal.getTime();
 
-			data = phone + " " + id.toString() + " " + formatter.format(start) + " " + formatter.format(end);
+			data = inputData[0] + " " + id.toString() + " " + inputData[1] + " " + inputData[2];
 			Service.appendToFile("tempIDs.txt", data, 1);
 		} catch (Exception e) {
 			e.printStackTrace();

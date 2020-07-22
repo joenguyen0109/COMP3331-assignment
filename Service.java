@@ -47,6 +47,16 @@ class Service {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(stringdate);
     }
 
+    static String dateToString(Date date){
+        return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(date);
+    }
+
+    static void printBeacon(String[] beacon){
+        System.out.println(beacon[0] + ",");
+        System.out.println(beacon[1] + ",");
+        System.out.println(beacon[2] + ".");
+    }
+
     static void printOutLog(String line) {
         String[] dataString = line.split(" ");
         System.out.println(dataString[0] + ",");

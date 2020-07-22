@@ -1,15 +1,21 @@
+
 // Java implementation for a client 
 // Save file as Client.java 
-
+import java.util.Date;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
+import java.util.Calendar;
 
 // Client class 
 public class Client {
 	private static ObjectOutputStream objectOutput;
 	private static ObjectInputStream objectInput;
 	private static String[] authData = new String[2];
+	private static String _tempID = "";
+	private static Date _start;
+	private static Date _end;
+
 	public static void main(String[] args) throws IOException {
 		try {
 			String serverIP = args[0];
@@ -36,14 +42,14 @@ public class Client {
 				}
 
 				if (command.equals("logout")) {
-					sendBeacon(new String[]{"Beacon","127.0.0.1",Integer.toString(clientPort)}, "Exit");
+					sendBeacon(new String[] { "Beacon", "127.0.0.1", Integer.toString(clientPort) }, "Exit");
 					logout();
 					s.close();
 					break;
 				} else {
 					switch (command) {
 						case "Download_tempID":
-							downloadTempID(new String[] { authData[0] });
+							downloadTempID(authData);
 							break;
 						case "Upload_contact_log":
 							uploadFile();
@@ -51,7 +57,11 @@ public class Client {
 						default:
 							String[] infoClient = command.split(" ");
 							if (infoClient[0].equals("Beacon")) {
-								sendBeacon(infoClient,"Message");
+								String data = command + " " + _tempID + " " + Service.dateToString(_start) + " "
+										+ Service.dateToString(_end);
+								Service.printBeacon(new String[] { _tempID, Service.dateToString(_start),
+										Service.dateToString(_end) });
+								sendBeacon(infoClient, data);
 							} else {
 								System.out.println("Error. Invalid command");
 							}
@@ -70,7 +80,8 @@ public class Client {
 		}
 	}
 
-	private static void sendBeacon(String[] infoClient, String buffer) throws UnknownHostException, SocketException, IOException {
+	private static void sendBeacon(String[] infoClient, String buffer)
+			throws UnknownHostException, SocketException, IOException {
 		InetAddress address = InetAddress.getByName(infoClient[1]);
 		DatagramSocket socket = new DatagramSocket();
 		DatagramPacket beacon = new DatagramPacket(buffer.getBytes(), buffer.length(), address,
@@ -121,22 +132,29 @@ public class Client {
 		return auth;
 	}
 
+	private static void downloadTempID(String[] d) throws IOException, ClassNotFoundException {
+		Calendar cal = Calendar.getInstance();
+		_start = cal.getTime();
+		cal.add(Calendar.MINUTE, 15);
+		_end = cal.getTime();
 
-
-	private static void downloadTempID(String[] data) throws IOException, ClassNotFoundException {
+		String[] data = new String[] { d[0], Service.dateToString(_start), Service.dateToString(_end) };
 		MessagesFormats<String[]> downloadMessage = new MessagesFormats<String[]>("Download", data);
 		objectOutput.writeObject(downloadMessage);
+
 		@SuppressWarnings("unchecked")
 		MessagesFormats<String> downloadResponse = (MessagesFormats<String>) objectInput.readObject();
+
 		System.out.println("TempID:");
-		System.out.println(downloadResponse.getData());
+		_tempID = downloadResponse.getData();
+		System.out.println(_tempID);
 	}
 
 	private static void logout() throws IOException {
 		String[] data = new String[] { authData[0], authData[1] };
 		MessagesFormats<String[]> exitMessage = new MessagesFormats<String[]>("Exit", data);
 		objectOutput.writeObject(exitMessage);
-		
+
 	}
 
 	private static void uploadFile() {

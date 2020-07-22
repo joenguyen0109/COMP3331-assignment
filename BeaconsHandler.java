@@ -2,8 +2,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.nio.charset.Charset;
-
+import java.util.Calendar;
+import java.util.Date;
 class BeaconsHandler extends Thread {
     private int _port;
 
@@ -21,8 +21,16 @@ class BeaconsHandler extends Thread {
                 String message = new String(packet.getData(), packet.getOffset(), packet.getLength(), "UTF-8");
                 if (message.equals("Exit")) {
                     break;
+                } else {
+                    System.out.println("received beacon:");
+                    Service.printBeacon(
+                            new String[] { message.split(" ")[3], message.split(" ")[4] + " " + message.split(" ")[5],
+                                    message.split(" ")[6] + " " + message.split(" ")[7] });
+                    System.out.println("Current time is:");
+                    Date currentTime = Calendar.getInstance().getTime();
+                    System.out.println(Service.dateToString(currentTime) + ".");
+                    
                 }
-
             }
             beaconHanldersSocket.close();
         } catch (SocketException e) {
