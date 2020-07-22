@@ -5,6 +5,9 @@ import java.util.Date;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
+
+
+
 import java.util.Calendar;
 
 // Client class 
@@ -12,9 +15,9 @@ public class Client {
 	private static ObjectOutputStream objectOutput;
 	private static ObjectInputStream objectInput;
 	private static String[] authData = new String[2];
-	private static String _tempID = "";
-	private static Date _start;
-	private static Date _end;
+	private static String _tempID = "1";
+	private static Date _start =  Calendar.getInstance().getTime();
+	private static Date _end = Calendar.getInstance().getTime();
 
 	public static void main(String[] args) throws IOException {
 		try {
@@ -24,15 +27,17 @@ public class Client {
 			Scanner scn = new Scanner(System.in);
 			String command = "";
 			boolean auth = false;
-
-			BeaconsHandler beconhandler = new BeaconsHandler(clientPort);
-			beconhandler.start();
-
+			
 			InetAddress ip = InetAddress.getByName(serverIP);
 			Socket s = new Socket(ip, serverPort);
 			objectOutput = new ObjectOutputStream(s.getOutputStream());
 			objectInput = new ObjectInputStream(s.getInputStream());
+			
+			
 			auth = authenicate(scn);
+			
+			BeaconsHandler beconhandler = new BeaconsHandler(clientPort,objectOutput);
+			beconhandler.start();
 
 			while (true) {
 				if (auth) {
@@ -158,12 +163,13 @@ public class Client {
 	}
 
 	private static void uploadFile() {
-		String[] data = new String[Service.countFileLine("your_zID_contactlog.txt")];
+		String[] data = new String[Service.countFileLine("your_zID_contactlog.txt") + 1];
 		try {
 			String filename = "your_zID_contactlog.txt";
 			BufferedReader reader = new BufferedReader(new FileReader(filename));
 			String line;
-			int i = 0;
+			int i = 1;
+			data[0] = authData[0];
 			while ((line = reader.readLine()) != null) {
 				Service.printOutLog(line);
 				data[i] = line;

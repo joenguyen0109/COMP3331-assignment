@@ -4,7 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 class Service {
-    static void appendToFile(String filePath, String text, int noOfLines) {
+    static void appendToFile(String filePath, String[] text, int noOfLines) {
         File file = new File(filePath);
         FileWriter fr = null;
         BufferedWriter br = null;
@@ -14,7 +14,10 @@ class Service {
             br = new BufferedWriter(fr);
             br.newLine();
             // you can use write or append method
-            br.write(text);
+
+            for (String line : text) {
+                br.write(line);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -47,11 +50,11 @@ class Service {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(stringdate);
     }
 
-    static String dateToString(Date date){
+    static String dateToString(Date date) {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(date);
     }
 
-    static void printBeacon(String[] beacon){
+    static void printBeacon(String[] beacon) {
         System.out.println(beacon[0] + ",");
         System.out.println(beacon[1] + ",");
         System.out.println(beacon[2] + ".");

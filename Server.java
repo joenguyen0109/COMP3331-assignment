@@ -12,6 +12,7 @@ public class Server {
 
 	static HashMap<String, AuthObject> authData = new HashMap<String, AuthObject>();
 	static int second_block = 0;
+
 	public static void main(String[] args) throws IOException {
 		// server is listening on port 5056
 		int serverPort = Integer.parseInt(args[0]);
@@ -106,7 +107,7 @@ class ClientHandler extends Thread {
 						case "Download":
 							MessagesFormats<String> downloadResponse = new MessagesFormats<String>("Download",
 									generateNewTempID(inputData.getData()));
-							
+
 							dos.writeObject(downloadResponse);
 							System.out.println("user: " + inputData.getData()[0]);
 							System.out.println("TempID:");
@@ -114,13 +115,22 @@ class ClientHandler extends Thread {
 							break;
 
 						case "Upload":
-							for (String line : inputData.getData()) {
-								Service.printOutLog(line);
+							System.out.println("Received contact log from " + inputData.getData()[0]);
+							for(int i = 1; i< inputData.getData().length; i++ ){
+								Service.printOutLog(inputData.getData()[i]);
+								//System.out.println(inputData.getData()[i]);
 							}
 							System.out.println("Contact log checking");
 							contact(inputData.getData());
 							break;
-							
+
+						case "Beacon":
+							System.out.println(inputData.getData()[0] + " " + inputData.getData()[1] + " "
+									+ inputData.getData()[2]);
+							Service.printBeacon(new String[] { inputData.getData()[3],
+									inputData.getData()[4] + " " + inputData.getData()[5],
+									inputData.getData()[6] + " " + inputData.getData()[7] });
+							break;
 						default:
 							break;
 					}
@@ -180,7 +190,7 @@ class ClientHandler extends Thread {
 			retrunString = id.toString();
 
 			data = inputData[0] + " " + id.toString() + " " + inputData[1] + " " + inputData[2];
-			Service.appendToFile("tempIDs.txt", data, 1);
+			Service.appendToFile("tempIDs.txt", new String[]{data}, 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -195,7 +205,7 @@ class ClientHandler extends Thread {
 			switch (time) {
 				case 3:
 					Date date = new Date();
-					if (date.getTime() - object.get_date().getTime() < (Server.second_block * 1000) ) {
+					if (date.getTime() - object.get_date().getTime() < (Server.second_block * 1000)) {
 						returnString = "Out";
 						break;
 					} else {
