@@ -10,7 +10,6 @@ public class Client {
 	private static ObjectOutputStream objectOutput;
 	private static ObjectInputStream objectInput;
 	private static String[] authData = new String[2];
-	static boolean exit = false;
 	public static void main(String[] args) throws IOException {
 		try {
 			String serverIP = args[0];
@@ -37,7 +36,7 @@ public class Client {
 				}
 
 				if (command.equals("logout")) {
-					exit = true;
+					sendBeacon(new String[]{"Beacon","127.0.0.1",Integer.toString(clientPort)}, "Exit");
 					logout();
 					s.close();
 					break;
@@ -52,13 +51,7 @@ public class Client {
 						default:
 							String[] infoClient = command.split(" ");
 							if (infoClient[0].equals("Beacon")) {
-								InetAddress address = InetAddress.getByName(infoClient[1]);
-								DatagramSocket socket = new DatagramSocket();
-								String buffer = "Message";
-								DatagramPacket beacon = new DatagramPacket(buffer.getBytes(), buffer.length(), address,
-										Integer.parseInt(infoClient[2]));
-								socket.send(beacon);
-								socket.close();
+								sendBeacon(infoClient,"Message");
 							} else {
 								System.out.println("Error. Invalid command");
 							}
@@ -75,6 +68,15 @@ public class Client {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static void sendBeacon(String[] infoClient, String buffer) throws UnknownHostException, SocketException, IOException {
+		InetAddress address = InetAddress.getByName(infoClient[1]);
+		DatagramSocket socket = new DatagramSocket();
+		DatagramPacket beacon = new DatagramPacket(buffer.getBytes(), buffer.length(), address,
+				Integer.parseInt(infoClient[2]));
+		socket.send(beacon);
+		socket.close();
 	}
 
 	private static boolean authenicate(Scanner scn) throws IOException, ClassNotFoundException {
@@ -117,8 +119,9 @@ public class Client {
 			}
 		}
 		return auth;
-
 	}
+
+
 
 	private static void downloadTempID(String[] data) throws IOException, ClassNotFoundException {
 		MessagesFormats<String[]> downloadMessage = new MessagesFormats<String[]>("Download", data);
@@ -130,8 +133,10 @@ public class Client {
 	}
 
 	private static void logout() throws IOException {
-		MessagesFormats<String[]> exitMessage = new MessagesFormats<String[]>("Exit", authData);
+		String[] data = new String[] { authData[0], authData[1] };
+		MessagesFormats<String[]> exitMessage = new MessagesFormats<String[]>("Exit", data);
 		objectOutput.writeObject(exitMessage);
+		
 	}
 
 	private static void uploadFile() {
