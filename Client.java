@@ -10,15 +10,21 @@ public class Client {
 	private static ObjectOutputStream objectOutput;
 	private static ObjectInputStream objectInput;
 	private static String[] authData = new String[2];
-
+	static boolean exit = false;
 	public static void main(String[] args) throws IOException {
 		try {
+			String serverIP = args[0];
+			int serverPort = Integer.parseInt(args[1]);
+			int clientPort = Integer.parseInt(args[2]);
 			Scanner scn = new Scanner(System.in);
 			String command = "";
 			boolean auth = false;
-			InetAddress ip = InetAddress.getByName("localhost");
-			// establish the connection with server port 5056
-			Socket s = new Socket(ip, 5056);
+
+			BeaconsHandler beconhandler = new BeaconsHandler(clientPort);
+			beconhandler.start();
+
+			InetAddress ip = InetAddress.getByName(serverIP);
+			Socket s = new Socket(ip, serverPort);
 			objectOutput = new ObjectOutputStream(s.getOutputStream());
 			objectInput = new ObjectInputStream(s.getInputStream());
 			auth = authenicate(scn);
@@ -31,6 +37,7 @@ public class Client {
 				}
 
 				if (command.equals("logout")) {
+					exit = true;
 					logout();
 					s.close();
 					break;
@@ -43,7 +50,18 @@ public class Client {
 							uploadFile();
 							break;
 						default:
-							System.out.println("Error. Invalid command");
+							String[] infoClient = command.split(" ");
+							if (infoClient[0].equals("Beacon")) {
+								InetAddress address = InetAddress.getByName(infoClient[1]);
+								DatagramSocket socket = new DatagramSocket();
+								String buffer = "Message";
+								DatagramPacket beacon = new DatagramPacket(buffer.getBytes(), buffer.length(), address,
+										Integer.parseInt(infoClient[2]));
+								socket.send(beacon);
+								socket.close();
+							} else {
+								System.out.println("Error. Invalid command");
+							}
 							break;
 					}
 				}

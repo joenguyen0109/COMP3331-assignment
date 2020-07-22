@@ -13,10 +13,12 @@ import java.text.SimpleDateFormat;
 public class Server {
 
 	static HashMap<String, AuthObject> authData = new HashMap<String, AuthObject>();
-
+	static int second_block = 0;
 	public static void main(String[] args) throws IOException {
 		// server is listening on port 5056
-		ServerSocket ss = new ServerSocket(5056);
+		int serverPort = Integer.parseInt(args[0]);
+		second_block = Integer.parseInt(args[1]);
+		ServerSocket ss = new ServerSocket(serverPort);
 		readAuthFile();
 		// running infinite loop for getting
 		// client request
@@ -199,7 +201,7 @@ class ClientHandler extends Thread {
 			switch (time) {
 				case 3:
 					Date date = new Date();
-					if (date.getTime() - object.get_date().getTime() < 60000) {
+					if (date.getTime() - object.get_date().getTime() < (Server.second_block * 1000) ) {
 						returnString = "Out";
 						break;
 					} else {
