@@ -9,38 +9,32 @@ import java.text.ParseException;
 
 // Server class 
 public class Server {
-
+	// data to keep track of log in process
 	static HashMap<String, AuthObject> authData = new HashMap<String, AuthObject>();
 	static int second_block = 0;
 
 	public static void main(String[] args) throws IOException {
-		// server is listening on port 5056
+		// Input user to port and time
 		int serverPort = Integer.parseInt(args[0]);
 		second_block = Integer.parseInt(args[1]);
+
 		ServerSocket ss = new ServerSocket(serverPort);
 		readAuthFile();
-		// running infinite loop for getting
-		// client request
 		while (true) {
 			Socket s = null;
-
 			try {
-				// socket object to receive incoming client requests
+
 				s = ss.accept();
 
-				System.out.println("A new client is connected : " + s);
-
 				// obtaining input and out streams
-				ObjectInputStream dis = new ObjectInputStream(s.getInputStream());
-				ObjectOutputStream dos = new ObjectOutputStream(s.getOutputStream());
+				ObjectInputStream objectInput = new ObjectInputStream(s.getInputStream());
+				ObjectOutputStream objectOutput = new ObjectOutputStream(s.getOutputStream());
 
-				System.out.println("Assigning new thread for this client");
 
-				// create a new thread object
-				Thread t = new ClientHandler(s, dis, dos);
+				// create a new thread object and start thread to handle Client
+				Thread client = new ClientHandler(s, objectInput, objectOutput);
+				client.start();
 
-				// Invoking the start() method
-				t.start();
 			} catch (Exception e) {
 				s.close();
 				e.printStackTrace();
@@ -53,7 +47,6 @@ public class Server {
 			String filename = "credentials.txt";
 			BufferedReader reader = new BufferedReader(new FileReader(filename));
 			String line;
-
 			while ((line = reader.readLine()) != null) {
 				authData.put(line.split(" ")[0], new AuthObject(line.split(" ")[1]));
 			}
@@ -67,48 +60,55 @@ public class Server {
 
 // ClientHandler class
 class ClientHandler extends Thread {
-	final ObjectInputStream dis;
-	final ObjectOutputStream dos;
+	final ObjectInputStream objectInput;
+	final ObjectOutputStream objectOutput;
 	final Socket s;
 
 	// Constructor
-	public ClientHandler(Socket s, ObjectInputStream dis, ObjectOutputStream dos) {
+	public ClientHandler(Socket s, ObjectInputStream objectInput, ObjectOutputStream objectOutput) {
 		this.s = s;
-		this.dis = dis;
-		this.dos = dos;
+		this.objectInput = objectInput;
+		this.objectOutput = objectOutput;
 	}
 
 	@Override
 	public void run() {
-		String received;
-		// String toreturn;
 		while (true) {
 			try {
+				// get data from client
 				@SuppressWarnings("unchecked")
-				MessagesFormats<String[]> inputData = (MessagesFormats<String[]>) dis.readObject();
-				// receive the answer from client
-				received = inputData.getTitle();
-				System.out.println(received);
+				MessagesFormats<String[]> inputData = (MessagesFormats<String[]>) objectInput.readObject();
+				
+				// get command
+				String received = inputData.getTitle();
+
 				if (received.equals("Exit")) {
+					// Handle log out command
 					System.out.println(inputData.getData()[0] + " logout");
 					this.s.close();
 					break;
 				} else {
 					switch (received) {
+						// Handle sign in command
 						case "auth":
 							System.out.println(inputData.getData()[0] + " " + inputData.getData()[1]);
 							System.out.println(Server.authData.containsKey(inputData.getData()[0]));
+
+							// Sent message to the client
 							MessagesFormats<String> authResponse = new MessagesFormats<String>("auth",
 									checkAuth(inputData.getData()[0], inputData.getData()[1]));
-							dos.writeObject(authResponse);
-							System.out.println("Sent response");
-							// Check file
+							objectOutput.writeObject(authResponse);
+
+
 							break;
+
 						case "Download":
+							// Generate ID and send it back to the client
 							MessagesFormats<String> downloadResponse = new MessagesFormats<String>("Download",
 									generateNewTempID(inputData.getData()));
+							objectOutput.writeObject(downloadResponse);
 
-							dos.writeObject(downloadResponse);
+							// Print out the ID
 							System.out.println("user: " + inputData.getData()[0]);
 							System.out.println("TempID:");
 							System.out.println(downloadResponse.getData());
@@ -116,15 +116,19 @@ class ClientHandler extends Thread {
 
 						case "Upload":
 							System.out.println("Received contact log from " + inputData.getData()[0]);
+
+							// Print out all the beacon in upload file
 							for(int i = 1; i< inputData.getData().length; i++ ){
 								Service.printOutLog(inputData.getData()[i]);
-								//System.out.println(inputData.getData()[i]);
 							}
+
+							// Contact check
 							System.out.println("Contact log checking");
 							contact(inputData.getData());
 							break;
-
+						
 						case "Beacon":
+							// Print out the beacon sent from the client
 							System.out.println(inputData.getData()[0] + " " + inputData.getData()[1] + " "
 									+ inputData.getData()[2]);
 							Service.printBeacon(new String[] { inputData.getData()[3],
@@ -145,14 +149,15 @@ class ClientHandler extends Thread {
 		}
 		try {
 			// closing resources
-			this.dis.close();
-			this.dos.close();
+			this.objectInput.close();
+			this.objectOutput.close();
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	// Map tempID with upload file
 	void contact(String[] data) throws IOException, ParseException {
 		String filename = "tempIDs.txt";
 		BufferedReader reader = new BufferedReader(new FileReader(filename));
@@ -175,6 +180,7 @@ class ClientHandler extends Thread {
 		reader.close();
 	}
 
+	//Generate new id and write to the file
 	String generateNewTempID(String[] inputData) {
 		String retrunString = "";
 		try {
@@ -190,13 +196,14 @@ class ClientHandler extends Thread {
 			retrunString = id.toString();
 
 			data = inputData[0] + " " + id.toString() + " " + inputData[1] + " " + inputData[2];
-			Service.appendToFile("tempIDs.txt", new String[]{data}, 1);
+			Service.appendToFile("tempIDs.txt", new String[]{data}, 1,"Download");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return retrunString;
 	}
 
+	// Check Sign in info
 	String checkAuth(String phone, String password) {
 		if (Server.authData.containsKey(phone)) {
 			AuthObject object = Server.authData.get(phone);

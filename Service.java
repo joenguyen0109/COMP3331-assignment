@@ -4,7 +4,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 class Service {
-    static void appendToFile(String filePath, String[] text, int noOfLines) {
+    static void appendToFile(String filePath, String[] text, int noOfLines, String command) {
+        int linecount = countFileLine(filePath);
+
         File file = new File(filePath);
         FileWriter fr = null;
         BufferedWriter br = null;
@@ -12,12 +14,25 @@ class Service {
             // to append to file, you need to initialize FileWriter using below constructor
             fr = new FileWriter(file, true);
             br = new BufferedWriter(fr);
-            br.newLine();
-            // you can use write or append method
 
-            for (String line : text) {
-                br.write(line);
+            if (command.equals("Download") || command.equals("Writing")) {
+                if (linecount != 0) {
+                    br.newLine();
+                }
+                br.write(text[0]);
+            } else {
+                int i = 0;
+                for (String line : text) {
+                    if(i == 0){
+                        br.write(line);
+                    }else{
+                        br.newLine();
+                        br.write(text[i]);
+                    }
+                    i++;
+                }
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

@@ -19,8 +19,6 @@ class BeaconsHandler extends Thread {
     @Override
     public void run() {
         try (DatagramSocket beaconHanldersSocket = new DatagramSocket(_port)) {
-            checkExpire checkExpires = new checkExpire();
-            checkExpires.start();
             while (true) {
                 byte[] buffer = new byte[65507];
                 DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length);
@@ -32,7 +30,7 @@ class BeaconsHandler extends Thread {
                     System.out.println("received beacon:");
                     dataTofile = message.split(" ")[3] + " " + message.split(" ")[4] + " " + message.split(" ")[5] + " "
                             + message.split(" ")[6] + " " + message.split(" ")[7];
-                    
+
                     Service.printBeacon(dataTofile.split(" "));
                     System.out.println("Current time is:");
                     Date currentTime = Calendar.getInstance().getTime();
@@ -64,24 +62,45 @@ class BeaconsHandler extends Thread {
 
 class checkExpire extends Thread {
     LinkedList<Date> timeExpired = new LinkedList<Date>();
+    private static String _phone;
+    private static ObjectOutputStream _objectOutput;
+
+    checkExpire(String phone, ObjectOutputStream objectOutput) {
+        _phone = phone;
+        _objectOutput = objectOutput;
+    }
 
     @Override
     public void run() {
-
         while (true) {
             if (BeaconsHandler.state.equals("Exit")) {
                 break;
             } else {
                 switch (BeaconsHandler.state) {
+                    case "Checking":
+                        try {
+                            FileWriter f2 = new FileWriter("your_zID_contactlog.txt", false);
+                            f2.write("");
+                            f2.close();
+                            BeaconsHandler.state = "No action";
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case "Upload":
+                        uploadFile();
+                        BeaconsHandler.state = "Waiting";
+                        break;
                     case "Waiting":
-                        //System.out.println("Waiting State");
                         if (!timeExpired.isEmpty()) {
                             if (timeExpired.getFirst().before(Calendar.getInstance().getTime())) {
                                 try {
+                                    String[] data = getDataFromFile();
                                     FileWriter f2 = new FileWriter("your_zID_contactlog.txt", false);
                                     f2.write("");
                                     f2.close();
-                                    Service.appendToFile("your_zID_contactlog.txt", getDataFromFile(), 1);
+                                    Service.appendToFile("your_zID_contactlog.txt", data, 1, "Remove");
+                                    timeExpired.removeFirst();
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
@@ -89,16 +108,16 @@ class checkExpire extends Thread {
                         }
                         break;
                     case "Writing":
-                        System.out.println("Writing State");
                         System.out.println(BeaconsHandler.dataTofile);
-                        Service.appendToFile("your_zID_contactlog.txt", new String[] { BeaconsHandler.dataTofile }, 1);
+                        Service.appendToFile("your_zID_contactlog.txt", new String[] { BeaconsHandler.dataTofile }, 1,
+                                "Writing");
                         BeaconsHandler.state = "Waiting";
                         Calendar cal = Calendar.getInstance();
                         cal.add(Calendar.MINUTE, 3);
                         timeExpired.add(cal.getTime());
                         break;
+
                     default:
-                        //System.out.println("Default State");
                         break;
                 }
             }
@@ -108,8 +127,8 @@ class checkExpire extends Thread {
 
     private static String[] getDataFromFile() {
         int lineCount = Service.countFileLine("your_zID_contactlog.txt");
-        String[] data;
-        if(lineCount == 0){
+        String[] data = new String[] {};
+        if (lineCount > 1) {
             data = new String[lineCount - 1];
             try {
                 String filename = "your_zID_contactlog.txt";
@@ -125,9 +144,29 @@ class checkExpire extends Thread {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }else{
-            data = new String[]{}; 
         }
         return data;
+    }
+
+    private static void uploadFile() {
+
+        String[] data = new String[Service.countFileLine("your_zID_contactlog.txt") + 1];
+        data[0] = _phone;
+        try {
+            String filename = "your_zID_contactlog.txt";
+            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            String line;
+            int i = 1;
+            while ((line = reader.readLine()) != null) {
+                Service.printOutLog(line);
+                data[i] = line;
+                i++;
+            }
+            MessagesFormats<String[]> uploadMessage = new MessagesFormats<String[]>("Upload", data);
+            _objectOutput.writeObject(uploadMessage);
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

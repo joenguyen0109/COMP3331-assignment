@@ -1,5 +1,6 @@
 import java.util.Date;
 
+// This class is the value for the hashmap which has tempID as the key, In order to map tempID and contact log
 class ContactObject {
     private final String _phone;
     private final Date _start;

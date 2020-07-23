@@ -33,11 +33,15 @@ public class Client {
 			objectOutput = new ObjectOutputStream(s.getOutputStream());
 			objectInput = new ObjectInputStream(s.getInputStream());
 			
-			
-			auth = authenicate(scn);
-			
 			BeaconsHandler beconhandler = new BeaconsHandler(clientPort,objectOutput);
 			beconhandler.start();
+
+			auth = authenicate(scn);
+
+
+			checkExpire checkExpires = new checkExpire(authData[0],objectOutput);
+            checkExpires.start();
+
 
 			while (true) {
 				if (auth) {
@@ -57,7 +61,7 @@ public class Client {
 							downloadTempID(authData);
 							break;
 						case "Upload_contact_log":
-							uploadFile();
+							BeaconsHandler.state = "Upload";
 							break;
 						default:
 							String[] infoClient = command.split(" ");
@@ -162,25 +166,6 @@ public class Client {
 
 	}
 
-	private static void uploadFile() {
-		String[] data = new String[Service.countFileLine("your_zID_contactlog.txt") + 1];
-		try {
-			String filename = "your_zID_contactlog.txt";
-			BufferedReader reader = new BufferedReader(new FileReader(filename));
-			String line;
-			int i = 1;
-			data[0] = authData[0];
-			while ((line = reader.readLine()) != null) {
-				Service.printOutLog(line);
-				data[i] = line;
-				i++;
-			}
-			MessagesFormats<String[]> uploadMessage = new MessagesFormats<String[]>("Upload", data);
-			objectOutput.writeObject(uploadMessage);
-			reader.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+
 
 }
