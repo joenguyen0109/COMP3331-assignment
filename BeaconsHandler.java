@@ -113,7 +113,7 @@ class checkExpire extends Thread {
                                 "Writing");
                         BeaconsHandler.state = "Waiting";
                         Calendar cal = Calendar.getInstance();
-                        cal.add(Calendar.MINUTE, 3);
+                        cal.add(Calendar.SECOND, 3);
                         timeExpired.add(cal.getTime());
                         break;
 

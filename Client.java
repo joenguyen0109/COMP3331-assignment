@@ -27,7 +27,9 @@ public class Client {
 			Scanner scn = new Scanner(System.in);
 			String command = "";
 			boolean auth = false;
-			
+
+			//129.94.242.118
+
 			InetAddress ip = InetAddress.getByName(serverIP);
 			Socket s = new Socket(ip, serverPort);
 			objectOutput = new ObjectOutputStream(s.getOutputStream());
