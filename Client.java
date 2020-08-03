@@ -5,9 +5,6 @@ import java.util.Date;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
-
-
-
 import java.util.Calendar;
 
 // Client class 
@@ -28,13 +25,15 @@ public class Client {
 			String command = "";
 			boolean auth = false;
 
-			//129.94.242.118
+			
 
 			InetAddress ip = InetAddress.getByName(serverIP);
 			Socket s = new Socket(ip, serverPort);
 			objectOutput = new ObjectOutputStream(s.getOutputStream());
 			objectInput = new ObjectInputStream(s.getInputStream());
 			
+			ManageState.setSate("Checking");
+
 			BeaconsHandler beconhandler = new BeaconsHandler(clientPort,objectOutput);
 			beconhandler.start();
 
@@ -53,17 +52,17 @@ public class Client {
 				}
 
 				if (command.equals("logout")) {
-					sendBeacon(new String[] { "Beacon", "127.0.0.1", Integer.toString(clientPort) }, "Exit");
-					logout();
+					logout(clientPort);
 					s.close();
 					break;
+
 				} else {
 					switch (command) {
 						case "Download_tempID":
 							downloadTempID(authData);
 							break;
 						case "Upload_contact_log":
-							BeaconsHandler.state = "Upload";
+							ManageState.setSate("Upload");
 							break;
 						default:
 							String[] infoClient = command.split(" ");
@@ -91,6 +90,7 @@ public class Client {
 		}
 	}
 
+	// Send beacon to other clients
 	private static void sendBeacon(String[] infoClient, String buffer)
 			throws UnknownHostException, SocketException, IOException {
 		InetAddress address = InetAddress.getByName(infoClient[1]);
@@ -101,6 +101,7 @@ public class Client {
 		socket.close();
 	}
 
+	// Check authenication
 	private static boolean authenicate(Scanner scn) throws IOException, ClassNotFoundException {
 		boolean auth = false;
 		System.out.print("Username: ");
@@ -143,6 +144,7 @@ public class Client {
 		return auth;
 	}
 
+	// get new tempID
 	private static void downloadTempID(String[] d) throws IOException, ClassNotFoundException {
 		Calendar cal = Calendar.getInstance();
 		_start = cal.getTime();
@@ -161,11 +163,14 @@ public class Client {
 		System.out.println(_tempID);
 	}
 
-	private static void logout() throws IOException {
+	// logout
+	private static void logout(int clientPort) throws IOException {
 		String[] data = new String[] { authData[0], authData[1] };
 		MessagesFormats<String[]> exitMessage = new MessagesFormats<String[]>("Exit", data);
 		objectOutput.writeObject(exitMessage);
-
+		// Send logout command to other threads
+		sendBeacon(new String[] { "Beacon", "127.0.0.1", Integer.toString(clientPort) }, "Exit");
+		ManageState.setSate("Exit");
 	}
 
 
