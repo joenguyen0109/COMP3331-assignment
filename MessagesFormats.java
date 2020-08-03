@@ -1,4 +1,8 @@
 import java.io.Serializable;
+
+/* 
+    This is the application protocol
+*/
 @SuppressWarnings("serial")
 class MessagesFormats<T> implements Serializable{
     private String _command;

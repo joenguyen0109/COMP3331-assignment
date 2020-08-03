@@ -1,4 +1,8 @@
 import java.util.Date;
+/* 
+    this class is the value of the hashmap which has phone number as the key
+    to keep track of number fail log in. 
+*/
 class AuthObject{
     private final String _password;
     private Date _date;

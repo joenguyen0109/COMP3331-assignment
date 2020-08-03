@@ -46,7 +46,10 @@ class BeaconsHandler extends Thread {
                         System.out.println("The beacon is valid");
                         MessagesFormats<String[]> m = new MessagesFormats<String[]>("Beacon", message.split(" "));
                         _objectOutput.writeObject(m);
-                        ManageState.setSate("Writing");
+                        synchronized(ManageState._state) 
+                        { 
+                            ManageState.setSate("Writing");
+                        }
                     } else {
                         System.out.println("The beacon is invalid");
                     }
@@ -76,34 +79,52 @@ class checkExpire extends Thread {
 
     @Override
     public void run() {
+        
         while (true) {
-            if (ManageState.state.equals("Exit")) {
+            if (ManageState._state.equals("Exit")) {
                 break;
             } else {
-                switch (ManageState.state) {
+                synchronized(ManageState._state) 
+                { 
+                switch (ManageState._state) {
                     case "Checking":
                         try {
                             FileWriter f2 = new FileWriter("your_z5253838_contactlog.txt", false);
                             f2.write("");
                             f2.close();
-                            ManageState.setSate("No action"); 
+                            ManageState.setSate("No action");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                         break;
+                    
                     case "Upload":
                         uploadFile();
                         ManageState.setSate("Waiting");
                         break;
+                    
                     case "Waiting":
                         if (!timeExpired.isEmpty()) {
                             if (timeExpired.getFirst().before(Calendar.getInstance().getTime())) {
                                 String[] data = getDataFromFile();
+
+                                // Empty the file
+                                try {
+                                    FileWriter f2 = new FileWriter("your_z5253838_contactlog.txt", false);
+                                    f2.write("");
+                                    f2.close();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                // Re-Write to the file without the first line
                                 Service.appendToFile("your_z5253838_contactlog.txt", data, 1, "Remove");
+                                
                                 timeExpired.removeFirst();
                             }
                         }
                         break;
+
                     case "Writing":
                         Service.appendToFile("your_z5253838_contactlog.txt", new String[] { BeaconsHandler.dataTofile }, 1,
                                 "Writing");
@@ -118,7 +139,7 @@ class checkExpire extends Thread {
                 }
             }
         }
-
+        }
     }
 
     private static String[] getDataFromFile() {

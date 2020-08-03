@@ -110,7 +110,7 @@ class Service {
 	}
 
     // Check contact after upload file
-    static void contact(String[] data) throws IOException, ParseException {
+    static void contactCheck(String[] data) throws IOException, ParseException {
 
         System.out.println("Received contact log from " + data[0]);
         // Print out all the beacon in upload file
@@ -205,7 +205,7 @@ class Service {
 			}
 			return returnString;
 		} else {
-			return "Phone number doesn't exit";
+			return "Phone number doesn't exist";
 		}
 	}
 

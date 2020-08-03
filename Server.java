@@ -83,6 +83,7 @@ class ClientHandler extends Thread {
 							objectOutput.writeObject(authResponse);
 							break;
 
+						// Handle download command
 						case "Download":
 							// Generate ID and send it back to the client
 							MessagesFormats<String> downloadResponse = new MessagesFormats<String>("Download",
@@ -90,11 +91,13 @@ class ClientHandler extends Thread {
 							objectOutput.writeObject(downloadResponse);
 							break;
 
+						// Handle upload command
 						case "Upload":
 							// Contact check
-							Service.contact(inputData.getData());
+							Service.contactCheck(inputData.getData());
 							break;
 						
+						// print out beacon
 						case "Beacon":
 							// Print out the beacon sent from the client
 							System.out.println(inputData.getData()[0] + " " + inputData.getData()[1] + " "
@@ -125,10 +128,4 @@ class ClientHandler extends Thread {
 			e.printStackTrace();
 		}
 	}
-
-	
-
-
-
-
 }

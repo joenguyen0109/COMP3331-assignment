@@ -29,16 +29,21 @@ public class Client {
 
 			InetAddress ip = InetAddress.getByName(serverIP);
 			Socket s = new Socket(ip, serverPort);
+			
 			objectOutput = new ObjectOutputStream(s.getOutputStream());
 			objectInput = new ObjectInputStream(s.getInputStream());
+
+			// Change the state to handle the your_zid file
+			synchronized(ManageState._state) 
+			{ 
+				ManageState.setSate("Checking");
+			} 
 			
-			ManageState.setSate("Checking");
 
 			BeaconsHandler beconhandler = new BeaconsHandler(clientPort,objectOutput);
 			beconhandler.start();
 
 			auth = authenicate(scn);
-
 
 			checkExpire checkExpires = new checkExpire(authData[0],objectOutput);
             checkExpires.start();
@@ -46,7 +51,8 @@ public class Client {
 
 			while (true) {
 				if (auth) {
-					command = scn.nextLine(); // next command
+					// get command
+					command = scn.nextLine();
 				} else {
 					command = "logout";
 				}
@@ -61,9 +67,14 @@ public class Client {
 						case "Download_tempID":
 							downloadTempID(authData);
 							break;
+
 						case "Upload_contact_log":
-							ManageState.setSate("Upload");
+							synchronized(ManageState._state) 
+							{ 
+								ManageState.setSate("Upload");
+							} 
 							break;
+						
 						default:
 							String[] infoClient = command.split(" ");
 							if (infoClient[0].equals("Beacon")) {
@@ -84,7 +95,6 @@ public class Client {
 			scn.close();
 			objectInput.close();
 			objectOutput.close();
-			// dos.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -104,22 +114,31 @@ public class Client {
 	// Check authenication
 	private static boolean authenicate(Scanner scn) throws IOException, ClassNotFoundException {
 		boolean auth = false;
+
 		System.out.print("Username: ");
 		authData[0] = scn.nextLine();
 		System.out.print("Password: ");
 		authData[1] = scn.nextLine();
+
+		// send username, password to the server
 		MessagesFormats<String[]> outputMessage = new MessagesFormats<String[]>("auth", authData);
 		objectOutput.writeObject(outputMessage);
+
 		while (true) {
+			// get the protocol from the server
 			@SuppressWarnings("unchecked")
 			MessagesFormats<String> inputData = (MessagesFormats<String>) objectInput.readObject();
+
+			// Check its header and handle it
 			if (inputData.getData().equals("Ok")) {
 				System.out.println("Welcome to the BlueTrace Simulator!");
 				auth = true;
 				break;
+
 			} else if (inputData.getData().equals("Out")) {
 				System.out.println("Your account is blocked due to multiple login failures. Please try again later");
 				break;
+
 			} else if (inputData.getData().equals("Wrong Password")) {
 				System.out.println("Invalid Password. Please try again");
 				System.out.print("Password: ");
@@ -127,7 +146,8 @@ public class Client {
 				String[] data = new String[] { authData[0], authData[1] };
 				outputMessage = new MessagesFormats<String[]>("auth", data);
 				objectOutput.writeObject(outputMessage);
-			} else if (inputData.getData().equals("Wrong Phone")) {
+
+			} else if (inputData.getData().equals("Phone number doesn't exist")) {
 				System.out.println("Phone number doesn't exist. Please try again");
 				System.out.print("Username: ");
 				authData[0] = scn.nextLine();
@@ -136,6 +156,7 @@ public class Client {
 				String[] data = new String[] { authData[0], authData[1] };
 				outputMessage = new MessagesFormats<String[]>("auth", data);
 				objectOutput.writeObject(outputMessage);
+
 			} else if (inputData.getData().equals("Wrong Password And Exit")) {
 				System.out.println("Invalid Password. Your account has been blocked. Please try again later");
 				break;
@@ -151,6 +172,7 @@ public class Client {
 		cal.add(Calendar.MINUTE, 15);
 		_end = cal.getTime();
 
+		
 		String[] data = new String[] { d[0], Service.dateToString(_start), Service.dateToString(_end) };
 		MessagesFormats<String[]> downloadMessage = new MessagesFormats<String[]>("Download", data);
 		objectOutput.writeObject(downloadMessage);
@@ -166,11 +188,17 @@ public class Client {
 	// logout
 	private static void logout(int clientPort) throws IOException {
 		String[] data = new String[] { authData[0], authData[1] };
+
+		// send protocol to server
 		MessagesFormats<String[]> exitMessage = new MessagesFormats<String[]>("Exit", data);
 		objectOutput.writeObject(exitMessage);
+
 		// Send logout command to other threads
 		sendBeacon(new String[] { "Beacon", "127.0.0.1", Integer.toString(clientPort) }, "Exit");
-		ManageState.setSate("Exit");
+		synchronized(ManageState._state) 
+        { 
+			ManageState.setSate("Exit");
+        } 
 	}
 
 
